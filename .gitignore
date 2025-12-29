@@ -1,0 +1,42 @@
+# --- Python Geral ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Ambientes Virtuais (PESADO - Nunca suba isso) ---
+venv/
+env/
+.env
+.venv/
+
+# --- VS Code (Configurações locais do seu editor) ---
+.vscode/
+*.code-workspace
+
+# --- Flask & Variáveis de Ambiente (Segurança) ---
+instance/
+.webassets-cache
+.env
+config_local.py
+# Se você criar chaves de API ou senhas, coloque em arquivos listados aqui
+
+# --- DADOS DO PROJETO (IMPORTANTE) ---
+# Ignorar a pasta onde os PDFs são salvos temporariamente
+uploads/
+# Ignorar arquivos Excel gerados, para não sujar o histórico
+*.xlsx
+*.xls
+*.csv
+
+# Mas queremos manter o arquivo ".gitkeep" se você criar pastas vazias
+# (Ex: se você criar a pasta 'uploads' vazia e quiser que a pasta vá pro git, 
+# mas não os arquivos dentro dela, crie um arquivo vazio chamado .gitkeep dentro dela)
+!uploads/.gitkeep
+
+# --- Banco de Dados (Se usar SQLite no futuro) ---
+*.db
+*.sqlite3
+
+# --- Arquivos de Sistema Operacional ---
+.DS_Store
+Thumbs.db
