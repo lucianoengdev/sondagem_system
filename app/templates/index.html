@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Importador de Sondagens</h5>
+        </div>
+        <div class="card-body">
+            <form action="/" method="post" enctype="multipart/form-data" class="row g-3 align-items-end">
+                <div class="col-md-10">
+                    <label class="form-label">Selecione a pasta ou arquivos PDF</label>
+                    <input class="form-control" type="file" name="files[]" multiple webkitdirectory>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-success w-100 fw-bold">PROCESSAR</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if dados %}
+    <div class="mt-4 table-responsive">
+        <table class="table table-bordered table-sm text-center align-middle" style="font-size: 0.8rem; border-color: #000;">
+            <thead class="table-light" style="border-bottom: 2px solid #000;">
+                <tr class="fw-bold bg-warning-subtle">
+                    <td rowspan="3">FURO/<br>AMOSTRA</td>
+                    <td rowspan="3">ESTACA</td>
+                    <td rowspan="3">PROFUNDIDADE<br>(m)</td>
+                    <td rowspan="3">L.L<br>(%)</td>
+                    <td rowspan="3">I.P<br>(%)</td>
+                    <td colspan="12">GRANULOMETRIA - % QUE PASSA</td>
+                    <td rowspan="3">IG</td>
+                    <td rowspan="3">TRB</td>
+                    <td rowspan="2">h nat</td>
+                    <td colspan="2">COMPACTAÇÃO</td>
+                    <td rowspan="3">EXP<br>(%)</td>
+                    <td rowspan="3">ISC<br>(%)</td>
+                </tr>
+                <tr class="fw-bold bg-warning-subtle">
+                    <td>#2"</td>
+                    <td>#1 1/2"</td>
+                    <td>#1"</td>
+                    <td>#3/4"</td>
+                    <td>#3/8"</td>
+                    <td>#4</td>
+                    <td>#10</td>
+                    <td>#16</td>
+                    <td>#30</td>
+                    <td>#40</td>
+                    <td>#50</td>
+                    <td>#100</td>
+                    <td>#200</td>
+                    <td>h (%)</td>
+                    <td>Ys (g/cm³)</td>
+                </tr>
+            </thead>
+            <tbody>
+                {% for furo in dados %}
+                    <tr class="table-secondary text-start"><td colspan="25"><strong>Arquivo: {{ furo.arquivo }}</strong></td></tr>
+
+                    {% for linha in furo.linhas %}
+                    <tr>
+                        <td>{{ linha.amostra }}</td> <td>{{ linha.estaca }}</td> <td>{{ linha.profundidade }}</td> <td>{{ linha.ll }}</td>
+                        <td>{{ linha.ip }}</td>
+                        
+                        <td>{{ linha.g_2 }}</td>
+                        <td>{{ linha.g_1_12 }}</td>
+                        <td>{{ linha.g_1 }}</td>
+                        <td>{{ linha.g_34 }}</td>
+                        <td>{{ linha.g_38 }}</td>
+                        <td>{{ linha.g_4 }}</td>
+                        <td>{{ linha.g_10 }}</td>
+                        <td>{{ linha.g_16 }}</td>
+                        <td>{{ linha.g_30 }}</td>
+                        <td>{{ linha.g_40 }}</td>
+                        <td>{{ linha.g_50 }}</td>
+                        <td>{{ linha.g_100 }}</td>
+                        <td>{{ linha.g_200 }}</td>
+
+                        <td>{{ linha.ig }}</td>
+                        <td>{{ linha.trb }}</td>
+                        <td>{{ linha.h_nat }}</td>
+                        
+                        <td>{{ linha.comp_h }}</td>
+                        <td>{{ linha.comp_ys }}</td>
+                        
+                        <td>{{ linha.exp }}</td>
+                        <td>{{ linha.isc }}</td>
+                    </tr>
+                    {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
