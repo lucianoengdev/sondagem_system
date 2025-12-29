@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .excel-table { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 11px; border-collapse: collapse; width: 100%; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background-color: white; margin-bottom: 20px; }
+    .excel-table th, .excel-table td { border: 1px solid #999; padding: 4px 2px; text-align: center; vertical-align: middle; white-space: nowrap; }
+    .header-main { background-color: #f2f2f2; font-weight: bold; text-transform: uppercase; border-bottom: 2px solid #000; }
+    .header-sub { background-color: #e6e6e6; font-weight: bold; }
+    .data-row:hover { background-color: #e0f7fa !important; cursor: pointer; outline: 2px solid #00bcd4; }
+    .footer-merged { background-color: #f8f9fa; text-align: left !important; padding-left: 10px !important; font-weight: 600; color: #333; font-size: 10px; border-top: 2px solid #444; }
+    .file-separator { background-color: #198754; color: white; text-align: left; padding: 5px 10px; font-weight: bold; font-size: 12px; margin-top: 20px; }
+</style>
+
+<div class="card bg-light mb-4 border-0 shadow-sm">
+    <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="text-success mb-0"><i class="bi bi-bar-chart-steps"></i> Análise e Tratamento</h4>
+            <small class="text-muted">Área destinada ao tratamento estatístico dos dados.</small>
+        </div>
+        
+        <button type="button" class="btn btn-dark btn-lg fw-bold shadow" data-bs-toggle="modal" data-bs-target="#configModal">
+            <i class="bi bi-gear-fill"></i> CONFIGURAR
+        </button>
+    </div>
+</div>
+
+<div class="modal fade" id="configModal" tabindex="-1" aria-labelledby="configModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title" id="configModalLabel"><i class="bi bi-tools"></i> Ferramentas de Análise</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <button class="btn btn-outline-danger w-100 py-3 fw-bold text-start"><i class="bi bi-trash"></i> Excluir Furos</button>
+            </div>
+            <div class="col-md-6">
+                <button class="btn btn-outline-primary w-100 py-3 fw-bold text-start"><i class="bi bi-graph-up"></i> Gerar Análise Estatística</button>
+            </div>
+            <div class="col-md-6">
+                <button class="btn btn-outline-success w-100 py-3 fw-bold text-start"><i class="bi bi-bezier"></i> Gerar Linear</button>
+            </div>
+            <div class="col-md-6">
+                <button class="btn btn-outline-secondary w-100 py-3 fw-bold text-start"><i class="bi bi-table"></i> Gerar Resumo</button>
+            </div>
+            <div class="col-md-6">
+                <button class="btn btn-outline-warning w-100 py-3 fw-bold text-start"><i class="bi bi-arrow-left-right"></i> Gerar Substituição</button>
+            </div>
+            <div class="col-md-6">
+                <button class="btn btn-outline-info w-100 py-3 fw-bold text-start"><i class="bi bi-droplet-half"></i> Gerar Intervalo de Umidade</button>
+            </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if dados %}
+    {% for furo in dados %}
+    <div class="fade-in">
+        <div class="file-separator bg-success">Arquivo: {{ furo.arquivo }} (Modo Análise)</div>
+        <div class="table-responsive">
+            <table class="excel-table">
+                <thead>
+                    <tr class="header-main">
+                        <th rowspan="3">FURO/<br>AMOSTRA</th>
+                        <th rowspan="3">ESTACA</th>
+                        <th rowspan="3">PROF.<br>(m)</th>
+                        <th rowspan="3">L.L<br>(%)</th>
+                        <th rowspan="3">I.P<br>(%)</th>
+                        <th colspan="13">GRANULOMETRIA - % QUE PASSA</th>
+                        <th rowspan="3">IG</th>
+                        <th rowspan="3">TRB</th>
+                        <th rowspan="2">h nat</th>
+                        <th colspan="2">COMPACTAÇÃO</th>
+                        <th rowspan="3">EXP<br>(%)</th>
+                        <th rowspan="3">ISC<br>(%)</th>
+                        <th rowspan="3">&delta;<br>g/cm³</th>
+                    </tr>
+                    <tr class="header-sub">
+                        <th>#2"</th><th>#1 1/2"</th><th>#1"</th><th>#3/4"</th><th>#3/8"</th><th>#4</th><th>#10</th><th>#16</th><th>#30</th><th>#40</th><th>#50</th><th>#100</th><th>#200</th><th>h (%)</th><th>Ys</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in furo.amostras %}
+                    <tr class="data-row">
+                        <td>{{ row.num }}</td><td>{{ row.estaca }}</td><td>{{ row.prof }}</td><td>{{ row.ll }}</td><td>{{ row.ip }}</td>
+                        {% for g in row.g_val %}<td>{{ g }}</td>{% endfor %}
+                        <td>{{ row.ig }}</td><td>{{ row.trb }}</td><td>{{ row.hnat }}</td>
+                        <td class="fw-bold text-primary">{{ row.comp_h }}</td><td class="fw-bold text-primary">{{ row.comp_ys }}</td>
+                        <td>{{ row.exp }}</td><td>{{ row.isc }}</td><td>{{ row.sigma }}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr><td colspan="26" class="footer-merged">{{ furo.rodape.linha1 }}</td></tr>
+                    <tr><td colspan="26" class="footer-merged">{{ furo.rodape.linha2 }}</td></tr>
+                    <tr><td colspan="26" class="footer-merged">{{ furo.rodape.linha3 }}</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="alert alert-warning">Nenhum dado carregado. Volte ao início e carregue os arquivos.</div>
+{% endif %}
+
+{% endblock %}
