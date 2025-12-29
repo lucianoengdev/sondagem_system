@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* CSS DA TABELA EXCEL (O MESMO QUE VOCÊ JÁ TEM) */
+    .excel-table { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 11px; border-collapse: collapse; width: 100%; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background-color: white; margin-bottom: 20px; }
+    .excel-table th, .excel-table td { border: 1px solid #999; padding: 4px 2px; text-align: center; vertical-align: middle; white-space: nowrap; }
+    .header-main { background-color: #f2f2f2; font-weight: bold; text-transform: uppercase; border-bottom: 2px solid #000; }
+    .header-sub { background-color: #e6e6e6; font-weight: bold; }
+    .data-row:hover { background-color: #fffacd !important; cursor: pointer; }
+    .footer-merged { background-color: #f8f9fa; text-align: left !important; padding-left: 10px !important; font-weight: 600; color: #333; font-size: 10px; border-top: 2px solid #444; }
+    .file-separator { background-color: #0d6efd; color: white; text-align: left; padding: 5px 10px; font-weight: bold; font-size: 12px; margin-top: 20px; }
+</style>
+
+<div class="mb-3 d-flex justify-content-between align-items-center">
+    <h4 class="text-secondary"><i class="bi bi-printer"></i> Visualização para Impressão</h4>
+</div>
+
+{% if dados %}
+    {% for furo in dados %}
+    <div class="fade-in">
+        <div class="file-separator">Arquivo: {{ furo.arquivo }}</div>
+        <div class="table-responsive">
+            <table class="excel-table">
+                <thead>
+                    <tr class="header-main">
+                        <th rowspan="3">FURO/<br>AMOSTRA</th>
+                        <th rowspan="3">ESTACA</th>
+                        <th rowspan="3">PROF.<br>(m)</th>
+                        <th rowspan="3">L.L<br>(%)</th>
+                        <th rowspan="3">I.P<br>(%)</th>
+                        <th colspan="13">GRANULOMETRIA - % QUE PASSA</th>
+                        <th rowspan="3">IG</th>
+                        <th rowspan="3">TRB</th>
+                        <th rowspan="2">h nat</th>
+                        <th colspan="2">COMPACTAÇÃO</th>
+                        <th rowspan="3">EXP<br>(%)</th>
+                        <th rowspan="3">ISC<br>(%)</th>
+                        <th rowspan="3">&delta;<br>g/cm³</th>
+                    </tr>
+                    <tr class="header-sub">
+                        <th>#2"</th><th>#1 1/2"</th><th>#1"</th><th>#3/4"</th><th>#3/8"</th><th>#4</th><th>#10</th><th>#16</th><th>#30</th><th>#40</th><th>#50</th><th>#100</th><th>#200</th><th>h (%)</th><th>Ys</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in furo.amostras %}
+                    <tr class="data-row">
+                        <td>{{ row.num }}</td><td>{{ row.estaca }}</td><td>{{ row.prof }}</td><td>{{ row.ll }}</td><td>{{ row.ip }}</td>
+                        {% for g in row.g_val %}<td>{{ g }}</td>{% endfor %}
+                        <td>{{ row.ig }}</td><td>{{ row.trb }}</td><td>{{ row.hnat }}</td>
+                        <td class="fw-bold text-primary">{{ row.comp_h }}</td><td class="fw-bold text-primary">{{ row.comp_ys }}</td>
+                        <td>{{ row.exp }}</td><td>{{ row.isc }}</td><td>{{ row.sigma }}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr><td colspan="26" class="footer-merged">{{ furo.rodape.linha1 }}</td></tr>
+                    <tr><td colspan="26" class="footer-merged">{{ furo.rodape.linha2 }}</td></tr>
+                    <tr><td colspan="26" class="footer-merged">{{ furo.rodape.linha3 }}</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="alert alert-warning">Nenhum dado carregado. Volte ao início.</div>
+{% endif %}
+
+{% endblock %}
