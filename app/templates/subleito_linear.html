@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block content %}
+<script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+
+<style>
+    .chart-box {
+        background: white;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        margin-bottom: 15px;
+    }
+    .table-container { max-height: 300px; overflow-y: auto; font-size: 11px; }
+    th { position: sticky; top: 0; background: #f8f9fa; z-index: 1; }
+</style>
+
+<div class="container-fluid pb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="text-primary"><i class="bi bi-bezier2"></i> Perfil Linear Geotécnico</h3>
+        
+        <button onclick="window.print()" class="btn btn-secondary btn-sm">
+            <i class="bi bi-printer"></i> Imprimir Tudo (PDF)
+        </button>
+    </div>
+
+    {% if erro %}
+    <div class="alert alert-warning">
+        {{ erro }} <a href="{{ url_for('main.subleito_analise') }}">Voltar para Análise</a>
+    </div>
+    {% else %}
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-dark text-white py-1">
+            <small>DADOS TABULADOS (ORDEM: ESTACA)</small>
+        </div>
+        <div class="card-body p-0 table-container">
+            <table class="table table-striped table-bordered mb-0 text-center table-sm table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>FURO</th>
+                        <th>ESTACA</th>
+                        <th>POSIÇÃO</th>
+                        <th>PROF (m)</th>
+                        <th>EXP (%)</th>
+                        <th>ISC (%)</th>
+                        <th>TRB</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in dados %}
+                    <tr>
+                        <td>{{ row.furo }}</td>
+                        <td>{{ row.estaca_raw }}</td>
+                        <td>{{ row.posicao }}</td>
+                        <td>{{ row.prof }}</td>
+                        <td>{{ row.exp }}</td>
+                        <td>{{ row.isc }}</td>
+                        <td class="fw-bold">{{ row.trb }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="row mb-2">
+        <div class="col-md-3">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text">Linha Limite EXP (%):</span>
+                <input type="number" id="inputExpLimit" class="form-control" value="2.0" step="0.1">
+                <button class="btn btn-primary" onclick="updateExpLine()">Aplicar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="chart-box">
+        <div id="chartISC" style="width: 100%; height: 350px;"></div>
+    </div>
+
+    <div class="chart-box">
+        <div id="chartEXP" style="width: 100%; height: 300px;"></div>
+    </div>
+
+    <div class="chart-box">
+        <div id="chartTRB" style="width: 100%; height: 250px;"></div>
+    </div>
+
+    {% endif %}
+</div>
+
+{% if not erro %}
+<script>
+    const rawData = {{ dados | tojson }};
+    
+    const xLabels = rawData.map(d => d.estaca_raw);
+
+    const yISC = rawData.map(d => parseFloat(String(d.isc).replace(',','.')) || 0);
+    const yEXP = rawData.map(d => parseFloat(String(d.exp).replace(',','.')) || 0);
+    const yTRB_Labels = rawData.map(d => d.trb);
+
+    // --- CORES E PADRÕES DO TRB ---
+    function getTRBStyle(trb) {
+        // Padrão AASHTO simplificado (Cores Pastéis Sólidas + Hachura Opcional)
+        // A-1/A-3 (Granular) = Amarelo/Ouro
+        // A-2 (Siltoso/Arenoso) = Azul
+        // A-4/A-5 (Siltoso) = Verde
+        // A-6/A-7 (Argiloso) = Laranja/Vermelho
+        
+        let color = '#ccc';
+        
+        if (trb.includes('A-1') || trb.includes('A-3')) color = '#ffd700'; // Gold
+        else if (trb.includes('A-2')) color = '#87ceeb'; // SkyBlue
+        else if (trb.includes('A-4') || trb.includes('A-5')) color = '#90ee90'; // LightGreen
+        else if (trb.includes('A-6')) color = '#ff7f50'; // Coral
+        else if (trb.includes('A-7')) color = '#cd5c5c'; // IndianRed
+        
+        return color;
+    }
+    const trbColors = yTRB_Labels.map(lbl => getTRBStyle(lbl));
+
+    const commonLayout = {
+        margin: { l: 60, r: 20, t: 30, b: 40 },
+        xaxis: { 
+            type: 'category', 
+            showgrid: true,
+            tickangle: -45, 
+            nticks: 20
+        },
+        showlegend: false
+    };
+
+    // --- PLOT 1: ISC ---
+    Plotly.newPlot('chartISC', [{
+        x: xLabels,
+        y: yISC,
+        type: 'bar',
+        name: 'ISC',
+        marker: { color: '#0d6efd', line: { color: 'black', width: 1 } },
+        text: yISC,
+        textposition: 'auto'
+    }], {
+        ...commonLayout,
+        title: 'Valores de ISC (%)',
+        yaxis: { title: 'ISC (%)', rangemode: 'tozero' }
+    });
+
+    // --- PLOT 2: EXPANSÃO ---
+    Plotly.newPlot('chartEXP', [{
+        x: xLabels,
+        y: yEXP,
+        type: 'bar',
+        name: 'Expansão',
+        marker: { color: '#dc3545', line: { color: 'black', width: 1 } }
+    }], {
+        ...commonLayout,
+        title: 'Valores de Expansão (%)',
+        yaxis: { title: 'Expansão (%)', rangemode: 'tozero' }
+    });
+
+    // --- PLOT 3: TRB (VISUAL LIMPO) ---
+    Plotly.newPlot('chartTRB', [{
+        x: xLabels,
+        y: yTRB_Labels.map(() => 1), 
+        type: 'bar',
+        text: yTRB_Labels, 
+        textposition: 'inside', 
+        insidetextanchor: 'middle',
+        marker: { 
+            color: trbColors, 
+            line: { color: 'black', width: 1 } 
+        },
+        hovertemplate: '<b>%{text}</b><extra></extra>'
+    }], {
+        ...commonLayout,
+        title: 'Classificação TRB',
+        yaxis: { 
+            showticklabels: false, 
+            fixedrange: true,
+            title: '' 
+        },
+        height: 250
+    });
+
+    function updateExpLine() {
+        const val = parseFloat(document.getElementById('inputExpLimit').value);
+        if (isNaN(val)) return;
+
+        const update = {
+            shapes: [{
+                type: 'line',
+                xref: 'paper', x0: 0, x1: 1,
+                yref: 'y', y0: val, y1: val,
+                line: { color: 'green', width: 3, dash: 'dashdot' }
+            }]
+        };
+        Plotly.relayout('chartEXP', update);
+    }
+    updateExpLine();
+
+</script>
+{% endif %}
+{% endblock %}
