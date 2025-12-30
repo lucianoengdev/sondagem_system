@@ -43,3 +43,4 @@ Thumbs.db
 
 # Arquivos temporários de dados (Runtime)
 temp_data.json
+temp_filters.json
