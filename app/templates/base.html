@@ -9,7 +9,6 @@
     
     <style>
         body { background-color: #f4f6f9; }
-        /* Estilo da Navbar */
         .navbar-brand { font-weight: bold; letter-spacing: 1px; }
         .nav-link { font-weight: 500; margin-right: 15px; }
         .nav-link.active { color: #ffc107 !important; border-bottom: 2px solid #ffc107; }
@@ -38,6 +37,11 @@
                     <li class="nav-item">
                         <a class="nav-link {% if active_page == 'analise' %}active{% endif %}" href="{{ url_for('main.subleito_analise') }}">
                             Subleito Análise
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if active_page == 'analise' %}active{% endif %}" href="{{ url_for('main.subleito_linear') }}">
+                            Subleito Linear
                         </a>
                     </li>
                 </ul>
