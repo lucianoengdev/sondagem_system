@@ -2,6 +2,7 @@
 
 {% block content %}
 <style>
+    /* Estilos Tabela (Mantidos) */
     .excel-table { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 11px; border-collapse: collapse; width: 100%; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background-color: white; margin-bottom: 20px; }
     .excel-table th, .excel-table td { border: 1px solid #999; padding: 4px 2px; text-align: center; vertical-align: middle; white-space: nowrap; }
     .header-main { background-color: #f2f2f2; font-weight: bold; text-transform: uppercase; border-bottom: 2px solid #000; }
@@ -9,53 +10,121 @@
     .data-row:hover { background-color: #e0f7fa !important; cursor: pointer; outline: 2px solid #00bcd4; }
     .footer-merged { background-color: #f8f9fa; text-align: left !important; padding-left: 10px !important; font-weight: 600; color: #333; font-size: 10px; border-top: 2px solid #444; }
     .file-separator { background-color: #198754; color: white; text-align: left; padding: 5px 10px; font-weight: bold; font-size: 12px; margin-top: 20px; }
+
+    /* Estilo das TAGS de Filtro */
+    .filter-tag {
+        display: inline-flex;
+        align-items: center;
+        background-color: #dc3545; /* Vermelho para indicar "Descarte" */
+        color: white;
+        padding: 5px 12px;
+        border-radius: 20px;
+        margin-right: 8px;
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .filter-tag .btn-close-white {
+        font-size: 0.7rem;
+        margin-left: 8px;
+        cursor: pointer;
+    }
 </style>
 
 <div class="card bg-light mb-4 border-0 shadow-sm">
-    <div class="card-body d-flex justify-content-between align-items-center">
-        <div>
-            <h4 class="text-success mb-0"><i class="bi bi-bar-chart-steps"></i> Análise e Tratamento</h4>
-            <small class="text-muted">Área destinada ao tratamento estatístico dos dados.</small>
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h4 class="text-success mb-0"><i class="bi bi-bar-chart-steps"></i> Análise e Tratamento</h4>
+                <small class="text-muted">Furos filtrados serão removidos da análise abaixo.</small>
+            </div>
+            <button type="button" class="btn btn-dark btn-lg fw-bold shadow" onclick="resetModal()" data-bs-toggle="modal" data-bs-target="#configModal">
+                <i class="bi bi-gear-fill"></i> CONFIGURAR
+            </button>
         </div>
-        
-        <button type="button" class="btn btn-dark btn-lg fw-bold shadow" data-bs-toggle="modal" data-bs-target="#configModal">
-            <i class="bi bi-gear-fill"></i> CONFIGURAR
-        </button>
+
+        <div id="filter-tags-container">
+            {% if filtros %}
+                <h6 class="fw-bold text-danger"><i class="bi bi-funnel-fill"></i> Filtros de Descarte Aplicados:</h6>
+                {% for f in filtros %}
+                <span class="filter-tag">
+                    {{ f.coluna }} {{ f.operador }} {{ f.valor }}
+                    <button type="button" class="btn-close btn-close-white" aria-label="Close" onclick="removerFiltro({{ loop.index0 }})"></button>
+                </span>
+                {% endfor %}
+            {% endif %}
+        </div>
     </div>
 </div>
 
-<div class="modal fade" id="configModal" tabindex="-1" aria-labelledby="configModalLabel" aria-hidden="true">
+<div class="modal fade" id="configModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
       <div class="modal-header bg-dark text-white">
-        <h5 class="modal-title" id="configModalLabel"><i class="bi bi-tools"></i> Ferramentas de Análise</h5>
+        <h5 class="modal-title" id="modalTitle"><i class="bi bi-tools"></i> Ferramentas de Análise</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body p-4">
+      
+      <div class="modal-body p-4" id="modalBodyMain">
         <div class="row g-3">
             <div class="col-md-6">
-                <button class="btn btn-outline-danger w-100 py-3 fw-bold text-start"><i class="bi bi-trash"></i> Excluir Furos</button>
+                <button onclick="showDeleteMenu()" class="btn btn-outline-danger w-100 py-3 fw-bold text-start"><i class="bi bi-trash"></i> Excluir Furos</button>
             </div>
             <div class="col-md-6">
                 <button class="btn btn-outline-primary w-100 py-3 fw-bold text-start"><i class="bi bi-graph-up"></i> Gerar Análise Estatística</button>
             </div>
-            <div class="col-md-6">
-                <button class="btn btn-outline-success w-100 py-3 fw-bold text-start"><i class="bi bi-bezier"></i> Gerar Linear</button>
-            </div>
-            <div class="col-md-6">
-                <button class="btn btn-outline-secondary w-100 py-3 fw-bold text-start"><i class="bi bi-table"></i> Gerar Resumo</button>
-            </div>
-            <div class="col-md-6">
-                <button class="btn btn-outline-warning w-100 py-3 fw-bold text-start"><i class="bi bi-arrow-left-right"></i> Gerar Substituição</button>
-            </div>
-            <div class="col-md-6">
-                <button class="btn btn-outline-info w-100 py-3 fw-bold text-start"><i class="bi bi-droplet-half"></i> Gerar Intervalo de Umidade</button>
-            </div>
+            <div class="col-md-6"><button class="btn btn-outline-success w-100 py-3 fw-bold text-start">Gerar Linear</button></div>
+             <div class="col-md-6"><button class="btn btn-outline-secondary w-100 py-3 fw-bold text-start">Gerar Resumo</button></div>
+             <div class="col-md-6"><button class="btn btn-outline-warning w-100 py-3 fw-bold text-start">Gerar Substituição</button></div>
+             <div class="col-md-6"><button class="btn btn-outline-info w-100 py-3 fw-bold text-start">Gerar Intervalo de Umidade</button></div>
         </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+
+      <div class="modal-body p-4 d-none" id="modalBodyDelete">
+        <h5 class="text-danger mb-3">Quais furos deseja descartar?</h5>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label fw-bold">1. Dado (Coluna)</label>
+                <select class="form-select" id="inputCol">
+                    <option value="FURO/AMOSTRA">FURO/AMOSTRA</option>
+                    <option value="ESTACA">ESTACA</option>
+                    <option value="PROF. INICIAL">PROF. INICIAL (m)</option>
+                    <option value="PROF. FINAL">PROF. FINAL (m)</option>
+                    <option value="PROF. ESPESSURA">PROF. ESPESSURA (m)</option>
+                    <option value="L.L (%)">L.L (%)</option>
+                    <option value="I.P (%)">I.P (%)</option>
+                    <option value="TRB">TRB (Classe)</option>
+                    <option value="IG">IG</option>
+                    <option value="h nat">h nat (%)</option>
+                    <option value="COMP. h">COMP. h (%)</option>
+                    <option value="COMP. Ys">COMP. Ys (g/cm³)</option>
+                    <option value="EXP (%)">EXP (%)</option>
+                    <option value="ISC (%)">ISC (%)</option>
+                    <option value="SIGMA">SIGMA (Delta)</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">2. Condição</label>
+                <select class="form-select" id="inputOp">
+                    <option value="Maior">Maior que (>)</option>
+                    <option value="Menor">Menor que (<)</option>
+                    <option value="Maior ou igual">Maior ou igual (>=)</option>
+                    <option value="Menor ou igual">Menor ou igual (<=)</option>
+                    <option value="Igual">Igual a (=)</option>
+                    <option value="Diferente">Diferente de (!=)</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">3. Valor</label>
+                <input type="text" class="form-control" id="inputVal" placeholder="Ex: 10 ou A-7-6">
+            </div>
+        </div>
+        <div class="mt-4 d-flex justify-content-between">
+            <button class="btn btn-secondary" onclick="resetModal()">Voltar</button>
+            <button class="btn btn-danger fw-bold" onclick="adicionarFiltro()">ADICIONAR DESCARTE</button>
+        </div>
       </div>
+      
     </div>
   </div>
 </div>
@@ -105,7 +174,64 @@
     </div>
     {% endfor %}
 {% else %}
-    <div class="alert alert-warning">Nenhum dado carregado. Volte ao início e carregue os arquivos.</div>
+    <div class="alert alert-warning mt-4">Nenhum dado encontrado ou todos os furos foram filtrados.</div>
 {% endif %}
+
+<script>
+    // Gerencia a troca de telas no Modal
+    function showDeleteMenu() {
+        document.getElementById('modalBodyMain').classList.add('d-none');
+        document.getElementById('modalBodyDelete').classList.remove('d-none');
+        
+        // Ajuste inteligente: Se selecionar TRB, remove opções numéricas
+        document.getElementById('inputCol').addEventListener('change', function() {
+            const op = document.getElementById('inputOp');
+            if (this.value === 'TRB') {
+                op.innerHTML = '<option value="Igual">Igual a</option><option value="Diferente">Diferente de</option>';
+            } else {
+                op.innerHTML = '<option value="Maior">Maior que (>)</option><option value="Menor">Menor que (<)</option><option value="Maior ou igual">Maior ou igual (>=)</option><option value="Menor ou igual">Menor ou igual (<=)</option><option value="Igual">Igual a (=)</option><option value="Diferente">Diferente de (!=)</option>';
+            }
+        });
+    }
+
+    function resetModal() {
+        document.getElementById('modalBodyMain').classList.remove('d-none');
+        document.getElementById('modalBodyDelete').classList.add('d-none');
+    }
+
+    // Envia o filtro para o Backend
+    function adicionarFiltro() {
+        const col = document.getElementById('inputCol').value;
+        const op = document.getElementById('inputOp').value;
+        const val = document.getElementById('inputVal').value;
+
+        if (!val) { alert("Digite um valor!"); return; }
+
+        const filtro = { coluna: col, operador: op, valor: val };
+
+        fetch('/api/filtros', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ acao: 'adicionar', filtro: filtro })
+        }).then(response => {
+            if(response.ok) {
+                location.reload(); // Recarrega para o Python processar a nova tabela
+            }
+        });
+    }
+
+    // Remove filtro
+    function removerFiltro(index) {
+        fetch('/api/filtros', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ acao: 'remover', indice: index })
+        }).then(response => {
+            if(response.ok) {
+                location.reload();
+            }
+        });
+    }
+</script>
 
 {% endblock %}
