@@ -8,7 +8,6 @@ def salvar_dados_temporarios(dados):
     with open(DATA_FILE, 'w', encoding='utf-8') as f:
         json.dump(dados, f, ensure_ascii=False, indent=4)
         
-    # Quando salvamos novos dados brutos, limpamos os filtros antigos
     salvar_filtros([]) 
 
 def carregar_dados_temporarios():
@@ -26,3 +25,17 @@ def carregar_filtros():
         with open(FILTERS_FILE, 'r', encoding='utf-8') as f:
             return json.load(f)
     return []
+
+LINEAR_FILE = 'temp_linear.json'
+
+def salvar_dados_linear(dados):
+    """Salva o 'snapshot' dos dados para o gráfico linear."""
+    with open(LINEAR_FILE, 'w', encoding='utf-8') as f:
+        json.dump(dados, f, ensure_ascii=False, indent=4)
+
+def carregar_dados_linear():
+    """Lê os dados congelados. Se não existir, retorna None."""
+    if os.path.exists(LINEAR_FILE):
+        with open(LINEAR_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return None
