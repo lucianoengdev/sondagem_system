@@ -41,4 +41,5 @@ uploads/
 .DS_Store
 Thumbs.db
 
-.temp_data.json
+# Arquivos temporários de dados (Runtime)
+temp_data.json
