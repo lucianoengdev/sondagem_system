@@ -1,6 +1,6 @@
 # Geotechnical Borehole Manager (Sondagem System)
 
-![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
 ![Status](https://img.shields.io/badge/status-In%20Development-orange.svg)
 ![Python](https://img.shields.io/badge/python-3.x-yellow.svg)
 
@@ -15,11 +15,12 @@ The system acts as a centralized platform to import, clean, and analyze soil sam
 * **Visual Consolidation:** Renders extracted data in a structured, Excel-like web interface that mimics the original engineering report format.
 * **Advanced Filtering (Data Cleaning):** Allows engineers to apply boolean logic filters. These filters utilize a robust tag system to manage inclusion/exclusion criteria dynamically.
 * **Session Persistence:** Keeps data and filters active while navigating between different modules of the application.
+* **Linear Geotechnical Profiling:** Generates interactive, synchronized linear graphs for ISC, Expansion, and TRB classification along the road axis. Features automatic sorting by station (Estaca) and specific data filtering.
 
 ## 🛠️ Technologies Used
 * **Backend:** Python 3, Flask (Web Framework).
 * **Data Processing:** PDFPlumber (PDF extraction), Pandas (Data manipulation), RegEx.
-* **Frontend:** HTML5, CSS3 (Bootstrap 5), JavaScript (Vanilla for Modal/API interactions).
+* **Frontend:** HTML5, CSS3 (Bootstrap 5), JavaScript (Vanilla for Modal/API interactions), Plotly.js (Data Visualization).
 * **Architecture:** Modular MVC-style structure (Routes, Utils packages).
 
 ## 🎯 Project Ambition
@@ -30,17 +31,17 @@ The goal is to build a comprehensive Geotechnical Decision Support System. We ai
 4.  Export consolidated reports for final engineering designs.
 
 ## 📍 Current Stage
-**Version 1.1.0 (Stable Alpha)**
-* ✅ **Core Engine:** PDF extraction logic is polished and handles edge cases (empty lines, multi-page tables).
-* ✅ **Data Cleaning:** The "Filter/Exclude" module is fully functional, allowing granular control over which samples enter the analysis phase.
-* ✅ **UI/UX:** Navigation between "Upload", "Print View", and "Analysis View" is implemented with data persistence.
+**Version 1.2.0 (Beta)**
+* ✅ **Core Engine:** PDF extraction logic is polished and handles edge cases.
+* ✅ **Data Cleaning:** The "Filter/Exclude" module is fully functional with smart logic to ignore empty rows.
+* ✅ **Linear Module:** Implemented the "Subleito Linear" page. It generates three synchronized charts (ISC, Expansion, TRB) using Plotly.js, with specific logic to handle station labels and "Data Freezing" (snapshots) to ensure consistency during analysis.
 
 ## 🚧 Known Issues & Future Improvements
 Currently, the extraction and filtering are working correctly. The immediate focus is on implementing the analytical modules.
 
 **Features to be implemented (Buttons currently unconfigured):**
 * [ ] **Generate Statistical Analysis:** Calculate Mean, Median, Standard Deviation, and Percentiles for selected soil properties.
-* [ ] **Generate Linear Graph:** Visual representation of the boreholes along the road axis.
+* [x] **Generate Linear Graph:** Visual representation of the boreholes along the road axis.        -> Completed in v1.2.0
 * [ ] **Generate Summary:** Create a consolidated executive summary table.
 * [ ] **Generate Substitution:** Algorithm to calculate volume/depth of soil replacement needed based on engineering criteria.
 * [ ] **Generate Moisture Interval:** Analysis of natural moisture vs. optimum moisture.
