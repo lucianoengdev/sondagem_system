@@ -2,8 +2,9 @@ import os
 from flask import Blueprint, render_template, request, current_app, redirect, url_for, jsonify
 from werkzeug.utils import secure_filename
 from .utils.pdf import processar_furos
-from .utils.file import salvar_dados_temporarios, carregar_dados_temporarios, salvar_filtros, carregar_filtros
+from .utils.file import salvar_dados_temporarios, carregar_dados_temporarios, salvar_filtros, carregar_filtros, salvar_dados_linear, carregar_dados_linear
 from .utils.filters import aplicar_filtros
+from .utils.graphs import preparar_dados_linear
 
 bp = Blueprint('main', __name__)
 
@@ -27,10 +28,8 @@ def index():
                 file.save(filepath)
                 saved_paths.append(filepath)
         
-        # Processa os dados
         lista_dados = processar_furos(saved_paths)
         
-        # SALVA OS DADOS PARA NAVEGAÇÃO e Redireciona para Imprimir
         salvar_dados_temporarios(lista_dados)
         return redirect(url_for('main.subleito_imprimir'))
 
@@ -48,7 +47,6 @@ def subleito_analise():
     dados_brutos = carregar_dados_temporarios()
     filtros_ativos = carregar_filtros()
     
-    # Aplica os filtros nos dados antes de enviar para o HTML
     dados_filtrados = aplicar_filtros(dados_brutos, filtros_ativos)
     
     return render_template('subleito_analise.html', 
@@ -77,3 +75,32 @@ def gerenciar_filtros():
     salvar_filtros(filtros_atuais)
     
     return jsonify({'status': 'ok'})
+
+# ROTA 5: SUBLEITO LINEAR
+@bp.route('/api/gerar_linear', methods=['POST'])
+def api_gerar_linear():
+    """
+    Pega os dados atuais + filtros atuais, processa a tabela Linear
+    e SALVA num arquivo separado. Não retorna HTML, retorna JSON de sucesso.
+    """
+    dados_brutos = carregar_dados_temporarios()
+    filtros_ativos = carregar_filtros()
+    
+    dados_limpos = aplicar_filtros(dados_brutos, filtros_ativos)
+    
+    dados_linear = preparar_dados_linear(dados_limpos)
+    
+    salvar_dados_linear(dados_linear)
+    
+    return jsonify({'status': 'ok'})
+
+@bp.route('/subleito/linear')
+def subleito_linear():
+    dados_tabela = carregar_dados_linear()
+    
+    if dados_tabela is None:
+        return render_template('subleito_linear.html', dados=[], erro="Gere o Linear primeiro!")
+        
+    return render_template('subleito_linear.html', 
+                           dados=dados_tabela, 
+                           active_page='linear')
