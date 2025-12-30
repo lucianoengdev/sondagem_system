@@ -1,8 +1,9 @@
 import os
-from flask import Blueprint, render_template, request, current_app, redirect, url_for
+from flask import Blueprint, render_template, request, current_app, redirect, url_for, jsonify
 from werkzeug.utils import secure_filename
-from .utils_pdf import processar_furos
-from .utils_file import salvar_dados_temporarios, carregar_dados_temporarios
+from .utils.pdf import processar_furos
+from .utils.file import salvar_dados_temporarios, carregar_dados_temporarios, salvar_filtros, carregar_filtros
+from .utils.filters import aplicar_filtros
 
 bp = Blueprint('main', __name__)
 
@@ -44,5 +45,35 @@ def subleito_imprimir():
 # ROTA 3: Análise com Modal
 @bp.route('/subleito/analise')
 def subleito_analise():
-    dados = carregar_dados_temporarios()
-    return render_template('subleito_analise.html', dados=dados, active_page='analise')
+    dados_brutos = carregar_dados_temporarios()
+    filtros_ativos = carregar_filtros()
+    
+    # Aplica os filtros nos dados antes de enviar para o HTML
+    dados_filtrados = aplicar_filtros(dados_brutos, filtros_ativos)
+    
+    return render_template('subleito_analise.html', 
+                           dados=dados_filtrados, 
+                           filtros=filtros_ativos, 
+                           active_page='analise')
+
+# ROTA 4: Subleito análise com filtro
+@bp.route('/api/filtros', methods=['POST'])
+def gerenciar_filtros():
+    req_data = request.get_json()
+    acao = req_data.get('acao') 
+
+    filtros_atuais = carregar_filtros()
+    
+    if acao == 'adicionar':
+        novo_filtro = req_data.get('filtro')
+        if novo_filtro not in filtros_atuais:
+            filtros_atuais.append(novo_filtro)
+            
+    elif acao == 'remover':
+        indice = int(req_data.get('indice'))
+        if 0 <= indice < len(filtros_atuais):
+            filtros_atuais.pop(indice)
+            
+    salvar_filtros(filtros_atuais)
+    
+    return jsonify({'status': 'ok'})
