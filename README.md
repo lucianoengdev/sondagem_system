@@ -1,6 +1,6 @@
 # Geotechnical Borehole Manager (Sondagem System)
 
-![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)
 ![Status](https://img.shields.io/badge/status-In%20Development-orange.svg)
 ![Python](https://img.shields.io/badge/python-3.x-yellow.svg)
 
@@ -16,6 +16,7 @@ The system acts as a centralized platform to import, clean, and analyze soil sam
 * **Advanced Filtering (Data Cleaning):** Allows engineers to apply boolean logic filters. These filters utilize a robust tag system to manage inclusion/exclusion criteria dynamically.
 * **Session Persistence:** Keeps data and filters active while navigating between different modules of the application.
 * **Linear Geotechnical Profiling:** Generates interactive, synchronized linear graphs for ISC, Expansion, and TRB classification along the road axis. Features automatic sorting by station (Estaca) and specific data filtering.
+* **Automated Statistical Analysis**: Calculates critical geotechnical design parameters (Mean, Standard Deviation, $X_{min}$, $\mu_{min}$, $X_{max}$) for specific road segments defined by the user. It generates professional, report-ready tables with a full calculation memory (traceability).
 
 ## 🛠️ Technologies Used
 * **Backend:** Python 3, Flask (Web Framework).
@@ -31,16 +32,22 @@ The goal is to build a comprehensive Geotechnical Decision Support System. We ai
 4.  Export consolidated reports for final engineering designs.
 
 ## 📍 Current Stage
-**Version 1.2.0 (Beta)**
-* ✅ **Core Engine:** PDF extraction logic is polished and handles edge cases.
-* ✅ **Data Cleaning:** The "Filter/Exclude" module is fully functional with smart logic to ignore empty rows.
-* ✅ **Linear Module:** Implemented the "Subleito Linear" page. It generates three synchronized charts (ISC, Expansion, TRB) using Plotly.js, with specific logic to handle station labels and "Data Freezing" (snapshots) to ensure consistency during analysis.
+**Version 1.3.0 (Beta)**
+* ✅ **Linear Segmentation:** Implemented a dynamic segmentation tool within the Linear Graph module, allowing users to define homogeneous road sections interactively.
+* ✅ **Statistical Engine:** Developed a robust mathematical module that processes soil data (Granulometry, Limits, Compaction) based on user-defined segments. It handles data sanitization (e.g., treating empty sieves as 100% passing) and computes design values.
+* ✅ **Professional Reporting:** The "Statistical Analysis" view is fully implemented with a styling engine that mimics official engineering reports (GeoSys Theme), including "Calculation Memory" tables for data validation.
+
+**Completed Modules:**
+1. Upload & Parsing (PDF Engine)
+2. Analysis & Filtering (Data Cleaning)
+3. Linear Profiling (Graphs & Segmentation)
+4. Statistical Analysis (Math & Reporting)
 
 ## 🚧 Known Issues & Future Improvements
 Currently, the extraction and filtering are working correctly. The immediate focus is on implementing the analytical modules.
 
 **Features to be implemented (Buttons currently unconfigured):**
-* [ ] **Generate Statistical Analysis:** Calculate Mean, Median, Standard Deviation, and Percentiles for selected soil properties.
+* [x] **Generate Statistical Analysis:** Calculate Mean, Median, Standard Deviation, and Percentiles for selected soil properties.
 * [x] **Generate Linear Graph:** Visual representation of the boreholes along the road axis.        -> Completed in v1.2.0
 * [ ] **Generate Summary:** Create a consolidated executive summary table.
 * [ ] **Generate Substitution:** Algorithm to calculate volume/depth of soil replacement needed based on engineering criteria.
