@@ -2,9 +2,10 @@ import os
 from flask import Blueprint, render_template, request, current_app, redirect, url_for, jsonify
 from werkzeug.utils import secure_filename
 from .utils.pdf import processar_furos
-from .utils.file import salvar_dados_temporarios, carregar_dados_temporarios, salvar_filtros, carregar_filtros, salvar_dados_linear, carregar_dados_linear
+from .utils.file import salvar_dados_temporarios, carregar_dados_temporarios, salvar_filtros, carregar_filtros, salvar_dados_linear, carregar_dados_linear,salvar_segmentos, carregar_segmentos, salvar_estatisticas, carregar_estatisticas
 from .utils.filters import aplicar_filtros
 from .utils.graphs import preparar_dados_linear
+from .utils.statistics import calcular_estatisticas_segmentos
 
 bp = Blueprint('main', __name__)
 
@@ -104,3 +105,35 @@ def subleito_linear():
     return render_template('subleito_linear.html', 
                            dados=dados_tabela, 
                            active_page='linear')
+
+# ROTA 6: ESTATÍSTICO
+@bp.route('/api/salvar_segmentos', methods=['POST'])
+def api_salvar_segmentos():
+    data = request.get_json()
+    segmentos = data.get('segmentos', [])
+    salvar_segmentos(segmentos)
+    return jsonify({'status': 'ok'})
+
+@bp.route('/subleito/estatistica')
+def subleito_estatistica():
+    stats = carregar_estatisticas()
+    if not stats:
+        return render_template('subleito_estatistica.html', erro="Gere a estatística primeiro!")
+    return render_template('subleito_estatistica.html', dados=stats, active_page='estatistica')
+
+@bp.route('/api/gerar_estatistica', methods=['POST'])
+def api_gerar_estatistica():
+    try:
+        # Chama a função matemática
+        resultado = calcular_estatisticas_segmentos()
+        
+        if resultado is None:
+            # Se retornar None, é porque não achou segmentos salvos
+            return jsonify({'status': 'error', 'msg': 'Defina e salve os segmentos no Linear primeiro!'}), 400
+        
+        return jsonify({'status': 'ok'})
+        
+    except Exception as e:
+        # Se der erro interno (no código python), mostra no terminal
+        print(f"ERRO ESTATISTICA: {e}")
+        return jsonify({'status': 'error', 'msg': str(e)}), 500
