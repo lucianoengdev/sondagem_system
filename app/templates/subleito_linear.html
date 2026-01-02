@@ -4,14 +4,22 @@
 <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
 
 <style>
+    /* Estilos para os containers dos gráficos */
     .chart-box {
         background: white;
         padding: 10px;
         border: 1px solid #ddd;
         border-radius: 5px;
-        margin-bottom: 15px;
+        margin-bottom: 15px; /* Espaço entre os gráficos */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
-    .table-container { max-height: 300px; overflow-y: auto; font-size: 11px; }
+    /* Estilo da Tabela com rolagem */
+    .table-container { 
+        max-height: 300px; 
+        overflow-y: auto; 
+        font-size: 11px; 
+    }
+    /* Cabeçalho da tabela fixo no topo ao rolar */
     th { position: sticky; top: 0; background: #f8f9fa; z-index: 1; }
 </style>
 
@@ -26,7 +34,7 @@
 
     {% if erro %}
     <div class="alert alert-warning">
-        {{ erro }} <a href="{{ url_for('main.subleito_analise') }}">Voltar para Análise</a>
+        {{ erro }} <a href="{{ url_for('main.subleito_analise') }}" class="fw-bold">Voltar para Análise e Configurar</a>
     </div>
     {% else %}
 
@@ -67,9 +75,41 @@
     <div class="row mb-2">
         <div class="col-md-3">
             <div class="input-group input-group-sm">
-                <span class="input-group-text">Linha Limite EXP (%):</span>
+                <span class="input-group-text fw-bold">Linha Limite EXP (%):</span>
                 <input type="number" id="inputExpLimit" class="form-control" value="2.0" step="0.1">
                 <button class="btn btn-primary" onclick="updateExpLine()">Aplicar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3 border-primary">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-1">
+            <small class="fw-bold"><i class="bi bi-scissors"></i> SEGMENTAÇÃO DE ISC DE PROJETO</small>
+            <button class="btn btn-sm btn-light text-primary fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#segmentPanel">
+                Mostrar/Esconder
+            </button>
+        </div>
+        <div class="collapse show" id="segmentPanel">
+            <div class="card-body bg-light">
+                <div class="row align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold small">Nº de Segmentos:</label>
+                        <div class="input-group input-group-sm">
+                            <input type="number" id="numSegments" class="form-control" value="1" min="1" max="20">
+                            <button class="btn btn-dark" onclick="criarTabelaSegmentos()">Criar Tabela</button>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <div id="tabelaSegmentosContainer" class="mt-2"></div>
+                    </div>
+                </div>
+                <div class="row mt-2" id="btnUpdateChartRow" style="display:none;">
+                    <div class="col-12 text-end">
+                        <button class="btn btn-success btn-sm fw-bold" onclick="plotarSegmentos()">
+                            <i class="bi bi-check-circle"></i> ATUALIZAR GRÁFICO ISC
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -91,34 +131,34 @@
 
 {% if not erro %}
 <script>
+    // --- PREPARAÇÃO DOS DADOS ---
     const rawData = {{ dados | tojson }};
     
+    // Eixo X: Mostra apenas o NÚMERO da Estaca (sem Posição)
     const xLabels = rawData.map(d => d.estaca_raw);
 
+    // Eixos Y: Tratamento de vírgula para ponto
     const yISC = rawData.map(d => parseFloat(String(d.isc).replace(',','.')) || 0);
     const yEXP = rawData.map(d => parseFloat(String(d.exp).replace(',','.')) || 0);
     const yTRB_Labels = rawData.map(d => d.trb);
 
-    // --- CORES E PADRÕES DO TRB ---
+    // Variáveis globais para a Segmentação (Limites do gráfico)
+    const primeiraEstaca = xLabels[0];
+    const ultimaEstaca = xLabels[xLabels.length - 1];
+
+    // --- CORES E PADRÕES DO TRB (AASHTO SIMPLIFICADO) ---
     function getTRBStyle(trb) {
-        // Padrão AASHTO simplificado (Cores Pastéis Sólidas + Hachura Opcional)
-        // A-1/A-3 (Granular) = Amarelo/Ouro
-        // A-2 (Siltoso/Arenoso) = Azul
-        // A-4/A-5 (Siltoso) = Verde
-        // A-6/A-7 (Argiloso) = Laranja/Vermelho
-        
         let color = '#ccc';
-        
-        if (trb.includes('A-1') || trb.includes('A-3')) color = '#ffd700'; // Gold
-        else if (trb.includes('A-2')) color = '#87ceeb'; // SkyBlue
-        else if (trb.includes('A-4') || trb.includes('A-5')) color = '#90ee90'; // LightGreen
-        else if (trb.includes('A-6')) color = '#ff7f50'; // Coral
-        else if (trb.includes('A-7')) color = '#cd5c5c'; // IndianRed
-        
+        if (trb.includes('A-1') || trb.includes('A-3')) color = '#ffd700'; // Amarelo (Granular)
+        else if (trb.includes('A-2')) color = '#87ceeb'; // Azul Céu (Siltoso/Arenoso)
+        else if (trb.includes('A-4') || trb.includes('A-5')) color = '#90ee90'; // Verde Claro (Silte)
+        else if (trb.includes('A-6')) color = '#ff7f50'; // Coral (Argila)
+        else if (trb.includes('A-7')) color = '#cd5c5c'; // Vermelho (Argila Pesada)
         return color;
     }
     const trbColors = yTRB_Labels.map(lbl => getTRBStyle(lbl));
 
+    // Configuração Comum dos Gráficos (Margens e Eixos)
     const commonLayout = {
         margin: { l: 60, r: 20, t: 30, b: 40 },
         xaxis: { 
@@ -130,6 +170,151 @@
         showlegend: false
     };
 
+    // ==========================================
+    // FUNÇÕES DE SEGMENTAÇÃO (LÓGICA DO PAINEL)
+    // ==========================================
+
+    function criarTabelaSegmentos() {
+        const n = parseInt(document.getElementById('numSegments').value);
+        if (isNaN(n) || n < 1) return;
+
+        let html = `
+        <table class="table table-sm table-bordered text-center mb-0" style="font-size: 12px; background: white;">
+            <thead class="table-dark">
+                <tr>
+                    <th style="width: 10%">Seg.</th>
+                    <th style="width: 30%">Estaca Inicial</th>
+                    <th style="width: 30%">Estaca Final</th>
+                    <th style="width: 30%">ISC Projeto (%)</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+        for (let i = 1; i <= n; i++) {
+            // Lógica Inteligente:
+            // 1. O Início do primeiro segmento é travado na primeira estaca da obra.
+            // 2. O Fim do último segmento é travado na última estaca da obra.
+            // 3. Os "meios" são automáticos: o Início de um é igual ao Fim do anterior.
+            
+            const isFirst = (i === 1);
+            const isLast = (i === n);
+            
+            const valStart = isFirst ? primeiraEstaca : '';
+            const valEnd = isLast ? ultimaEstaca : '';
+            
+            // Estilos para indicar campos automáticos/travados
+            const bgStart = 'background-color: #e9ecef; font-weight: bold; color: #0d6efd;';
+            const attrStart = 'readonly'; // Início sempre automático
+
+            const bgEnd = isLast ? 'background-color: #e9ecef; font-weight: bold; color: #0d6efd;' : '';
+            // Se mudar o Fim de um segmento, atualiza o Início do próximo
+            const attrEnd = isLast ? 'readonly' : `onchange="sincronizarSegmentos(${i})"`;
+
+            html += `
+            <tr>
+                <td class="fw-bold bg-light">${i}</td>
+                <td><input type="text" id="segStart_${i}" class="form-control form-control-sm text-center" value="${valStart}" style="${bgStart}" ${attrStart}></td>
+                <td><input type="text" id="segEnd_${i}" class="form-control form-control-sm text-center" value="${valEnd}" style="${bgEnd}" ${attrEnd}></td>
+                <td><input type="number" id="segISC_${i}" class="form-control form-control-sm text-center fw-bold text-success" placeholder="Valor"></td>
+            </tr>`;
+        }
+        html += `</tbody></table>`;
+        
+        document.getElementById('tabelaSegmentosContainer').innerHTML = html;
+        document.getElementById('btnUpdateChartRow').style.display = 'block';
+    }
+
+    function sincronizarSegmentos(index) {
+        // Função que copia o valor do FIM atual para o INÍCIO do próximo
+        const n = parseInt(document.getElementById('numSegments').value);
+        if (index >= n) return;
+        
+        const valorFimAtual = document.getElementById(`segEnd_${index}`).value;
+        // Atualiza visualmente o próximo input
+        document.getElementById(`segStart_${index + 1}`).value = valorFimAtual;
+    }
+
+    function plotarSegmentos() {
+        const n = parseInt(document.getElementById('numSegments').value);
+        const shapes = [];
+        const cores = ['#28a745', '#6f42c1', '#17a2b8', '#fd7e14', '#e83e8c'];
+        
+        // Array para salvar no backend
+        const segmentosParaSalvar = [];
+
+        // Lógica de conversão visual (igual anterior)
+        const xValores = xLabels.map(lbl => {
+            const match = lbl.match(/^(\d+)/); 
+            return match ? parseInt(match[1]) : 0;
+        });
+
+        for (let i = 1; i <= n; i++) {
+            const x0 = parseFloat(document.getElementById(`segStart_${i}`).value);
+            const x1 = parseFloat(document.getElementById(`segEnd_${i}`).value);
+            const yVal = parseFloat(document.getElementById(`segISC_${i}`).value);
+
+            if (isNaN(x0) || isNaN(x1) || isNaN(yVal)) continue;
+
+            // Adiciona na lista de salvamento
+            segmentosParaSalvar.push({
+                id: i,
+                inicio: x0,
+                fim: x1,
+                isc_projeto: yVal
+            });
+
+            // Lógica Visual do Plotly (Manteve igual)
+            let startIndex = -1;
+            let endIndex = -1;
+
+            for (let k = 0; k < xValores.length; k++) {
+                if (xValores[k] >= x0) { startIndex = k; break; }
+            }
+            for (let k = xValores.length - 1; k >= 0; k--) {
+                if (xValores[k] <= x1) { endIndex = k; break; }
+            }
+
+            if (startIndex === -1 || endIndex === -1 || startIndex > endIndex) continue;
+
+            const x0_visual = startIndex - 0.5;
+            const x1_visual = endIndex + 0.5;
+
+            shapes.push({
+                type: 'line',
+                xref: 'x', yref: 'y',
+                x0: x0_visual, x1: x1_visual,
+                y0: yVal, y1: yVal,
+                line: { color: cores[(i-1) % cores.length], width: 4 }
+            });
+
+            if (i < n && x1_visual < xValores.length - 0.5) {
+                shapes.push({
+                    type: 'line',
+                    xref: 'x', yref: 'y',
+                    x0: x1_visual, x1: x1_visual,
+                    y0: 0, y1: yVal * 1.5,
+                    line: { color: '#aaa', width: 1, dash: 'dot' }
+                });
+            }
+        }
+        
+        // 1. Atualiza visual
+        Plotly.relayout('chartISC', { shapes: shapes });
+
+        // 2. Salva no Servidor (NOVO)
+        fetch('/api/salvar_segmentos', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ segmentos: segmentosParaSalvar })
+        }).then(res => {
+            if(res.ok) console.log("Segmentos salvos com sucesso!");
+        });
+    }
+
+    // ==========================================
+    // PLOTAGEM DOS GRÁFICOS (INICIALIZAÇÃO)
+    // ==========================================
+
     // --- PLOT 1: ISC ---
     Plotly.newPlot('chartISC', [{
         x: xLabels,
@@ -138,7 +323,8 @@
         name: 'ISC',
         marker: { color: '#0d6efd', line: { color: 'black', width: 1 } },
         text: yISC,
-        textposition: 'auto'
+        textposition: 'auto',
+        opacity: 0.7 // Transparência para ver a linha do segmento "por trás/dentro"
     }], {
         ...commonLayout,
         title: 'Valores de ISC (%)',
@@ -158,13 +344,13 @@
         yaxis: { title: 'Expansão (%)', rangemode: 'tozero' }
     });
 
-    // --- PLOT 3: TRB (VISUAL LIMPO) ---
+    // --- PLOT 3: TRB (VISUAL LIMPO / FAIXA) ---
     Plotly.newPlot('chartTRB', [{
         x: xLabels,
-        y: yTRB_Labels.map(() => 1), 
+        y: yTRB_Labels.map(() => 1), // Altura fixa para criar faixas iguais
         type: 'bar',
-        text: yTRB_Labels, 
-        textposition: 'inside', 
+        text: yTRB_Labels, // O texto (A-7-6) aparece dentro da barra
+        textposition: 'inside',
         insidetextanchor: 'middle',
         marker: { 
             color: trbColors, 
@@ -175,13 +361,14 @@
         ...commonLayout,
         title: 'Classificação TRB',
         yaxis: { 
-            showticklabels: false, 
+            showticklabels: false, // Remove números do eixo Y
             fixedrange: true,
             title: '' 
         },
-        height: 250
+        height: 250 // Altura menor pois é apenas uma faixa
     });
 
+    // --- FUNÇÃO PARA ATUALIZAR LINHA DE EXPANSÃO (GRÁFICO 2) ---
     function updateExpLine() {
         const val = parseFloat(document.getElementById('inputExpLimit').value);
         if (isNaN(val)) return;
@@ -189,13 +376,15 @@
         const update = {
             shapes: [{
                 type: 'line',
-                xref: 'paper', x0: 0, x1: 1,
+                xref: 'paper', x0: 0, x1: 1, // Cruza todo o gráfico horizontalmente
                 yref: 'y', y0: val, y1: val,
                 line: { color: 'green', width: 3, dash: 'dashdot' }
             }]
         };
         Plotly.relayout('chartEXP', update);
     }
+    
+    // Inicia a linha de expansão padrão
     updateExpLine();
 
 </script>
