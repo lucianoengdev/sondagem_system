@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* --- PALETA DE CORES EXATA --- */
+    :root {
+        --geo-blue: #002060;   /* Azul Escuro (Cabeçalhos e Colunas Esq) */
+        --geo-grey: #d9d9d9;   /* Cinza (Dados) */
+        --geo-border: #ffffff; /* Bordas Brancas */
+    }
+
+    /* Cabeçalho da Tabela (Média, DesvPad...) */
+    .geo-header-row th {
+        background-color: var(--geo-blue) !important;
+        color: white !important;
+        border: 1px solid var(--geo-border);
+        text-transform: uppercase;
+        font-size: 11px;
+        vertical-align: middle;
+    }
+
+    /* 1ª Coluna: Texto Vertical (Indices Fisicos, Granulometria...) */
+    .geo-col-vertical {
+        background-color: var(--geo-blue) !important;
+        color: white !important;
+        font-weight: bold;
+        font-size: 11px;
+        vertical-align: middle;
+        text-align: center;
+        writing-mode: vertical-rl;
+        transform: rotate(180deg);
+        width: 30px;
+        border: 1px solid var(--geo-border);
+    }
+
+    /* 2ª Coluna: Rótulos (LL, IP, #2"...) */
+    .geo-col-label {
+        background-color: var(--geo-blue) !important;
+        color: white !important;
+        font-weight: bold;
+        font-size: 11px;
+        text-align: center; /* Centralizado conforme imagem */
+        border: 1px solid var(--geo-border);
+        padding: 4px;
+    }
+
+    /* Colunas de DADOS (Números) */
+    .geo-col-data {
+        background-color: var(--geo-grey) !important;
+        color: black !important;
+        font-weight: bold;
+        font-size: 11px;
+        text-align: center;
+        border: 1px solid var(--geo-border);
+        vertical-align: middle;
+    }
+
+    /* Última Linha (Intervalo) */
+    .geo-last-row td {
+        background-color: var(--geo-grey) !important; /* Linha toda cinza */
+        color: black !important;
+        font-weight: bold;
+        font-size: 11px;
+        border: 1px solid var(--geo-border);
+        vertical-align: middle;
+    }
+
+    /* Input transparente para a última linha */
+    .geo-input {
+        background: transparent;
+        border: none;
+        text-align: center;
+        font-weight: bold;
+        width: 100%;
+        color: black;
+    }
+    .geo-input:focus { outline: none; border-bottom: 1px solid black; }
+
+    /* Estilos de Impressão e Layout */
+    .memoria-title { font-size: 12px; font-weight: bold; color: #555; margin-top: 15px; margin-bottom: 5px; border-left: 4px solid var(--geo-blue); padding-left: 8px; }
+    
+    @media print {
+        .no-print { display: none; }
+        .page-break { page-break-after: always; }
+        .card { border: none !important; shadow: none !important; }
+    }
+</style>
+
+<div class="container pb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3 no-print">
+        <h3 class="text-primary"><i class="bi bi-calculator"></i> Análise Estatística</h3>
+        <button onclick="window.print()" class="btn btn-secondary btn-sm"><i class="bi bi-printer"></i> Imprimir Relatório</button>
+    </div>
+
+    {% if erro %}
+        <div class="alert alert-danger">{{ erro }}</div>
+    {% else %}
+
+        {% for seg in dados %}
+        <div class="card shadow-sm mb-5 page-break">
+            <div class="card-header bg-dark text-white p-2">
+                <div class="d-flex justify-content-between fw-bold small">
+                    <span>ESTUDO: SUBLEITO</span>
+                    <span>SEGMENTO: {{ seg.id }} (Estaca {{ seg.inicio }} a {{ seg.fim }})</span>
+                </div>
+                <div class="d-flex justify-content-between fw-bold small mt-1">
+                    <span>ENERGIA DE COMPACTAÇÃO: P. INTERNORMAL</span>
+                    <span></span>
+                </div>
+            </div>
+
+            <div class="card-body p-0">
+                <table class="table table-sm table-borderless mb-0">
+                    <thead>
+                        <tr class="geo-header-row text-center">
+                            <th colspan="2" style="width: 25%;">ENSAIOS</th>
+                            <th style="width: 10%;">Média</th>
+                            <th style="width: 10%;">DesvPad</th>
+                            <th style="width: 8%;">N</th>
+                            <th style="width: 10%;">Xmín.</th>
+                            <th style="width: 10%;">µmín.</th>
+                            <th style="width: 10%;">Xmáx.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for grupo in seg.grupos %}
+                            {% for row in grupo.rows %}
+                            <tr>
+                                {% if loop.first %}
+                                    <td rowspan="{{ grupo.rows|length }}" class="geo-col-vertical">{{ grupo.group_name }}</td>
+                                {% endif %}
+
+                                <td class="geo-col-label">{{ row.label }}</td>
+                                
+                                <td class="geo-col-data">{{ row.media }}</td>
+                                <td class="geo-col-data">{{ row.desvio }}</td>
+                                <td class="geo-col-data">{{ row.n_display }}</td>
+                                <td class="geo-col-data">{{ row.xmin }}</td>
+                                <td class="geo-col-data">{{ row.umin }}</td>
+                                <td class="geo-col-data">{{ row.xmax }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% endfor %}
+
+                        <tr class="geo-last-row">
+                            <td colspan="2" style="background-color: white !important; color: black !important; border: 1px solid #ccc; text-align: right; padding-right: 10px;">
+                                Intervalo de umidade e relação a ótima (%)
+                            </td>
+                            
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td><input type="text" class="geo-input" value="0,0"></td>
+                            <td class="text-center">a</td>
+                            <td><input type="text" class="geo-input" value="0,0"></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="p-3 bg-light border-top">
+                    <div class="memoria-title">MEMÓRIA DE CÁLCULO - SEGMENTO {{ seg.id }}</div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped table-sm text-center mb-0" style="font-size: 10px;">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Furo</th>
+                                    <th>Estaca</th>
+                                    <th>LL</th>
+                                    <th>IP</th>
+                                    <th>Umidade (%)</th>
+                                    <th>ISC (%)</th>
+                                    <th>Exp (%)</th>
+                                    <th>TRB</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in seg.memoria %}
+                                <tr>
+                                    <td>{{ item.furo }}</td>
+                                    <td>{{ item.estaca }}</td>
+                                    <td>{{ item.ll }}</td>
+                                    <td>{{ item.ip }}</td>
+                                    <td class="fw-bold text-primary">{{ item.comp_h if item.comp_h else '-' }}</td>
+                                    <td>{{ item.isc }}</td>
+                                    <td>{{ item.exp }}</td>
+                                    <td>{{ item.trb }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        {% endfor %}
+
+    {% endif %}
+</div>
+{% endblock %}
