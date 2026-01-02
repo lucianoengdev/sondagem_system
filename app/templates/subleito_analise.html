@@ -69,7 +69,9 @@
                 <button onclick="showDeleteMenu()" class="btn btn-outline-danger w-100 py-3 fw-bold text-start"><i class="bi bi-trash"></i> Excluir Furos</button>
             </div>
             <div class="col-md-6">
-                <button class="btn btn-outline-primary w-100 py-3 fw-bold text-start"><i class="bi bi-graph-up"></i> Gerar Análise Estatística</button>
+                <button class="btn btn-outline-primary w-100 py-3 fw-bold text-start" onclick="gerarEstatistica()">
+                    <i class="bi bi-graph-up"></i> Gerar Análise Estatística
+                </button>
             </div>
             <div class="col-md-6">
                 <button class="btn btn-outline-success w-100 py-3 fw-bold text-start" onclick="gerarLinear()">
@@ -243,6 +245,27 @@
             } else {
                 alert("Erro ao gerar linear.");
             }
+        });
+    }
+
+    function gerarEstatistica() {
+        console.log("Botão clicado!");
+        const btn = event.target;
+        btn.innerHTML = 'Calculando...';
+
+        fetch('/api/gerar_estatistica', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                window.location.href = "{{ url_for('main.subleito_estatistica') }}";
+            } else {
+                alert(data.msg || "Erro ao gerar estatística.");
+                btn.innerHTML = 'Gerar Análise Estatística';
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Erro de conexão com o servidor.");
         });
     }
 </script>
