@@ -41,7 +41,12 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if active_page == 'analise' %}active{% endif %}" href="{{ url_for('main.subleito_linear') }}">
-                            Subleito Linear
+                            Linear
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if active_page == 'estatistica' %}active{% endif %}" href="{{ url_for('main.subleito_estatistica') }}">
+                            <i class="bi bi-calculator"></i> Análise Estatística
                         </a>
                     </li>
                 </ul>
